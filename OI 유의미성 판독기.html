@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OI 유의미성 판독기 v3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* 기본 스핀 버튼 숨기기 */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans antialiased selection:bg-blue-500 selection:text-white">
+
+    <div class="container mx-auto px-4 py-8 max-w-2xl flex-grow flex flex-col justify-center">
+        
+        <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700/50 p-6 md:p-8 transition-all duration-300 hover:border-slate-600/50">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-700 pb-5 gap-3">
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold tracking-tight text-blue-400">
+                        OI 유의미성 판독기 <span class="text-sm font-semibold px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/20 ml-1">v3.0</span>
+                    </h1>
+                </div>
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 border border-slate-600/50 shadow-inner">
+                        🎯 롱/숏 양방향 자금 흐름 추적기
+                    </span>
+                </div>
+            </div>
+
+            <p class="mt-4 text-xs md:text-sm text-slate-400 flex items-center gap-1.5 bg-slate-900/40 p-3 rounded-lg border border-slate-700/30">
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>감소는 <span class="text-red-400 font-semibold">- (마이너스)</span>, 증가는 <span class="text-emerald-400 font-semibold">그냥 숫자만</span> 입력하세요.</span>
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-6">
+                <div class="space-y-2">
+                    <label for="totalOI" class="block text-xs font-semibold text-slate-300 tracking-wide uppercase">
+                        전체 미체결약정 규모 <span class="text-[11px] text-slate-500 font-normal">(단위 무관)</span>
+                    </label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <input 
+                            type="number" 
+                            id="totalOI" 
+                            value="100" 
+                            min="0.000001" 
+                            step="any"
+                            oninput="calculate()"
+                            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-medium text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600"
+                            placeholder="예: 100"
+                        >
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="changeOI" class="block text-xs font-semibold text-slate-300 tracking-wide uppercase">
+                        변동 수치 <span class="text-[11px] text-slate-500 font-normal">(증감량)</span>
+                    </label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <input 
+                            type="number" 
+                            id="changeOI" 
+                            value="-5" 
+                            step="any"
+                            oninput="calculate()"
+                            class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-medium text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder-slate-600"
+                            placeholder="예: -5 또는 5"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultContainer" class="mt-8 p-6 rounded-xl border border-slate-700 bg-slate-900/30 text-center transition-all duration-300">
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">변동 비율 계산 결과</div>
+                
+                <div id="resultValue" class="text-5xl md:text-6xl font-extrabold tracking-tight my-2 drop-shadow-sm transition-all duration-300">
+                    -5.0%
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-center items-center min-h-[4rem]">
+                    <p id="resultText" class="text-sm md:text-base leading-relaxed transition-all duration-300 text-slate-300 max-w-md">
+                        계산 중...
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-6 bg-slate-800/60 rounded-xl p-4 border border-slate-700/40 text-xs text-slate-400 space-y-2">
+            <div class="font-semibold text-slate-300 flex items-center gap-1">
+                💡 데이터 해석 핵심 가이드 (필승 숏타점 & 자금 본질)
+            </div>
+            <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                <li><span class="text-slate-300 font-medium">데이터의 본질:</span> OI 막대 높이가 전체적으로 낮아지는 것은 시장의 전체 자금 이탈을 뜻하며, 강력한 하락 전조 증상입니다.</li>
+                <li><span class="text-slate-300 font-medium">필승 숏 타점:</span> 가격 하락 + OI 감소 + 보조지표(ADX/MACD) 꺾임이 겹치면 상방 에너지가 완전 소멸한 자리입니다.</li>
+                <li><span class="text-slate-300 font-medium">하락 다이버전스:</span> 가격은 오르는데 전체적인 OI 크기가 산맥처럼 솟았다가 낮아지면 세력 이탈 신호입니다.</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <footer class="text-center py-4 text-[11px] text-slate-600 tracking-wider border-t border-slate-800/60">
+        OI SIGNIFICANCE ANALYZER v3.0 &copy; 2026 TRADING DASHBOARD
+    </footer>
+
+    <script>
+        function calculate() {
+            const totalOIInput = document.getElementById('totalOI');
+            const changeOIInput = document.getElementById('changeOI');
+            const resultValueDiv = document.getElementById('resultValue');
+            const resultTextDiv = document.getElementById('resultText');
+            const resultContainer = document.getElementById('resultContainer');
+
+            const totalOI = parseFloat(totalOIInput.value);
+            const changeOI = parseFloat(changeOIInput.value);
+
+            // 예외 처리 및 유효성 검사
+            if (isNaN(totalOI) || totalOI <= 0 || isNaN(changeOI)) {
+                resultValueDiv.innerText = "---";
+                resultValueDiv.className = "text-4xl font-bold text-slate-600 my-2";
+                resultTextDiv.innerText = "올바른 규모와 변동 수치를 입력해 주세요. (전체 규모는 0보다 커야 합니다)";
+                resultTextDiv.className = "text-sm text-slate-500 text-center";
+                resultContainer.className = "mt-8 p-6 rounded-xl border border-slate-800 bg-slate-900/20 text-center transition-all duration-300";
+                return;
+            }
+
+            // 계산식 적용
+            const percentage = (changeOI / totalOI) * 100;
+            const absPercentage = Math.abs(percentage);
+
+            // 퍼센트 텍스트 포맷팅 (소수점 첫째 자리, 양수일 경우 '+' 강제 표시)
+            let formattedPercentage = percentage.toFixed(1) + "%";
+            if (percentage > 0) {
+                formattedPercentage = "+" + formattedPercentage;
+            } else if (percentage === 0) {
+                formattedPercentage = "0.0%";
+            }
+
+            resultValueDiv.innerText = formattedPercentage;
+
+            let text = "";
+            let colorClass = "";
+            let bgClass = "";
+            let valueColorClass = "";
+
+            // 조건별 상태 판별 및 테마 적용
+            if (percentage === 0) {
+                // 0% 인 경우
+                text = "변동이 없습니다.";
+                colorClass = "text-slate-400";
+                valueColorClass = "text-slate-400";
+                bgClass = "border-slate-700 bg-slate-900/40";
+            } else if (percentage > 0) {
+                // 자금 증가 (+) : 롱 타점/추세 강화
+                if (percentage < 3.0) {
+                    text = "📈 미세한 자금 유입 (단순 노이즈) / 큰 의미 없는 수준입니다. 추세 방향성을 더 지켜보세요.";
+                    colorClass = "text-slate-300";
+                    valueColorClass = "text-slate-300";
+                    bgClass = "border-slate-700/60 bg-slate-800/40";
+                } else if (percentage < 6.0) {
+                    text = "🔥 신규 자금 유입 시작 (주의) / 가격이 오르며 유입되면 '진짜 눌림목 롱' 확률이 높습니다. 추세 강화 진행 중!";
+                    colorClass = "text-emerald-400 font-medium";
+                    valueColorClass = "text-emerald-400";
+                    bgClass = "border-emerald-500/30 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]";
+                } else {
+                    text = "🚀 강력한 자금 유입 (세력 드라이빙) / 추세가 확정되었습니다. 상승장에서 롱 관점을 강력하게 유지하세요!";
+                    colorClass = "text-emerald-500 font-bold";
+                    valueColorClass = "text-emerald-500";
+                    bgClass = "border-emerald-500 bg-emerald-950/40 ring-1 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]";
+                }
+            } else {
+                // 자금 감소 (-) : 숏 타점/추세 붕괴 (절댓값 기준 계산)
+                if (absPercentage < 3.0) {
+                    text = "📉 미세한 자금 이탈 (가짜 하락/노이즈) / 휩소(속임수)에 당하지 마세요. 아직 세력은 짐을 싸지 않았습니다.";
+                    colorClass = "text-slate-300";
+                    valueColorClass = "text-slate-300";
+                    bgClass = "border-slate-700/60 bg-slate-800/40";
+                } else if (absPercentage < 6.0) {
+                    text = "⚠️ 유의미한 이탈 시작 (숏 사냥 준비) / 자금이 빠지기 시작합니다. 15분봉 ADX/MACD 데드크로스를 대기하세요.";
+                    colorClass = "text-amber-400 font-medium";
+                    valueColorClass = "text-amber-400";
+                    bgClass = "border-amber-500/30 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]";
+                } else {
+                    text = "🚨 강력한 자금 이탈 (세력 엑시트!) / 필승 숏 타점 조건 성립! 폭포수 전조 증상입니다 (피보나치 0.618 붕괴 시 진입).";
+                    colorClass = "text-red-500 font-bold";
+                    valueColorClass = "text-red-500";
+                    bgClass = "border-red-500 bg-red-950/40 ring-1 ring-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.1)]";
+                }
+            }
+
+            // 동적 스타일 및 컨텐츠 반영
+            resultValueDiv.className = `text-5xl md:text-6xl font-extrabold tracking-tight my-2 drop-shadow-sm transition-all duration-300 ${valueColorClass}`;
+            resultTextDiv.className = `text-sm md:text-base leading-relaxed transition-all duration-300 text-center max-w-md ${colorClass}`;
+            resultTextDiv.innerText = text;
+            resultContainer.className = `mt-8 p-6 rounded-xl border text-center transition-all duration-300 ${bgClass}`;
+        }
+
+        // 초기 실행
+        window.onload = function() {
+            calculate();
+        };
+    </script>
+</body>
+</html>
