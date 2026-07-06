@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gem-Pro 필승 손익비 계산기</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .calculator-container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            width: 350px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+        }
+        h2 {
+            text-align: center;
+            color: #f3ba2f; /* 바이낸스 옐로우 */
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        .position-toggle {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: #2a2a2a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .position-toggle label {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            color: #888;
+        }
+        .position-toggle input {
+            display: none;
+        }
+        .position-toggle input:checked + span {
+            color: #fff;
+        }
+        #radio-short:checked + span {
+            background-color: #f6465d; /* 숏 레드 */
+            display: block;
+            height: 100%;
+        }
+        #radio-long:checked + span {
+            background-color: #0ecb81; /* 롱 그린 */
+            display: block;
+            height: 100%;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label.title {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #aaaaaa;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #f3ba2f;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #f3ba2f;
+            color: #121212;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #d19f23;
+        }
+        .results {
+            margin-top: 25px;
+            display: none;
+        }
+        .result-row {
+            background-color: #2a2a2a;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #f3ba2f;
+        }
+        .result-row.tp1 { border-left-color: #0ecb81; }
+        .result-row.tp2 { border-left-color: #0b9e65; }
+        .result-row.tp3 { border-left-color: #077248; }
+        .result-label {
+            font-size: 14px;
+            color: #ccc;
+        }
+        .result-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .error {
+            color: #f6465d;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h2>Gem-Pro 필승 손익비 계산기</h2>
+
+    <div class="position-toggle">
+        <label>
+            <input type="radio" name="position" value="short" id="radio-short" checked>
+            <span style="padding: 10px; display: block; border-radius: 6px 0 0 6px;">Short (공매도)</span>
+        </label>
+        <label>
+            <input type="radio" name="position" value="long" id="radio-long">
+            <span style="padding: 10px; display: block; border-radius: 0 6px 6px 0;">Long (공매수)</span>
+        </label>
+    </div>
+
+    <div class="input-group">
+        <label class="title" for="entry">진입 가격 (Entry Price)</label>
+        <input type="number" id="entry" step="any" placeholder="예: 65000">
+    </div>
+
+    <div class="input-group">
+        <label class="title" for="stoploss">손절 가격 (Stop Loss Price)</label>
+        <input type="number" id="stoploss" step="any" placeholder="예: 66000 (위험 기준점)">
+    </div>
+
+    <button onclick="calculateRR()">목표가 계산하기</button>
+
+    <div id="error-msg" class="error">진입가와 손절가를 정확히 확인해 주세요.</div>
+
+    <div id="results" class="results">
+        <div class="result-row tp1">
+            <span class="result-label">보수적 익절 (1 : 1.5)</span>
+            <span class="result-value" id="tp1-val">-</span>
+        </div>
+        <div class="result-row tp2">
+            <span class="result-label">표준 익절 (1 : 2.0)</span>
+            <span class="result-value" id="tp2-val">-</span>
+        </div>
+        <div class="result-row tp3">
+            <span class="result-label">추세장 익절 (1 : 3.0)</span>
+            <span class="result-value" id="tp3-val">-</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateRR() {
+        const position = document.querySelector('input[name="position"]:checked').value;
+        const entry = parseFloat(document.getElementById('entry').value);
+        const stopLoss = parseFloat(document.getElementById('stoploss').value);
+        const errorMsg = document.getElementById('error-msg');
+        const resultsDiv = document.getElementById('results');
+
+        // 초기화
+        errorMsg.style.display = 'none';
+        resultsDiv.style.display = 'none';
+
+        if (isNaN(entry) || isNaN(stopLoss) || entry <= 0 || stopLoss <= 0) {
+            errorMsg.innerText = "가격을 정확히 입력해 주세요.";
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        let risk = 0;
+        let tp1, tp2, tp3;
+
+        if (position === 'short') {
+            if (stopLoss <= entry) {
+                errorMsg.innerText = "숏 포지션의 손절가는 진입가보다 높아야 합니다.";
+                errorMsg.style.display = 'block';
+                return;
+            }
+            risk = stopLoss - entry;
+            tp1 = entry - (risk * 1.5);
+            tp2 = entry - (risk * 2.0);
+            tp3 = entry - (risk * 3.0);
+        } else {
+            if (stopLoss >= entry) {
+                errorMsg.innerText = "롱 포지션의 손절가는 진입가보다 낮아야 합니다.";
+                errorMsg.style.display = 'block';
+                return;
+            }
+            risk = entry - stopLoss;
+            tp1 = entry + (risk * 1.5);
+            tp2 = entry + (risk * 2.0);
+            tp3 = entry + (risk * 3.0);
+        }
+
+        // 0 이하로 떨어지는 가격 방지
+        tp1 = Math.max(tp1, 0);
+        tp2 = Math.max(tp2, 0);
+        tp3 = Math.max(tp3, 0);
+
+        // 소수점 처리 로직 (입력된 소수점 자릿수에 맞춰서 출력)
+        const getDecimals = (val) => {
+            if (Math.floor(val) === val) return 0;
+            return val.toString().split(".")[1].length || 0; 
+        }
+        
+        const maxDecimals = Math.max(getDecimals(entry), getDecimals(stopLoss), 2); // 최소 소수점 2자리
+
+        document.getElementById('tp1-val').innerText = tp1.toFixed(maxDecimals);
+        document.getElementById('tp2-val').innerText = tp2.toFixed(maxDecimals);
+        document.getElementById('tp3-val').innerText = tp3.toFixed(maxDecimals);
+
+        resultsDiv.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
